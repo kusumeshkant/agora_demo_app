@@ -7,15 +7,17 @@ import 'package:agora_viedio_app/widgets/call_actions_row.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uuid/uuid.dart';
 
 class VideoCallPage extends StatefulWidget {
-  const VideoCallPage({
+   VideoCallPage({
     super.key,
     required this.appId,
     required this.token,
     required this.channelName,
     required this.isMicEnabled,
     required this.isVideoEnabled,
+    required this.uid
   });
 
   final String appId;
@@ -23,6 +25,7 @@ class VideoCallPage extends StatefulWidget {
   final String channelName;
   final bool isMicEnabled;
   final bool isVideoEnabled;
+  var uid;
 
   @override
   State<VideoCallPage> createState() => _VideoCallPageState();
@@ -56,6 +59,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   }
 
   Future<void> _initialize() async {
+    _agoraEngine = createAgoraRtcEngine();
     // Set aspect ratio for video according to platform
     if (kIsWeb) {
       _viewAspectRatio = 3 / 2;
@@ -75,11 +79,14 @@ class _VideoCallPageState extends State<VideoCallPage> {
       publishCustomAudioTrack: _isMicEnabled,
       publishCameraTrack: _isVideoEnabled,
     );
+   
+
+  print("uuid:- ${widget.uid}");
    try {
     await _agoraEngine.joinChannel(
       token: widget.token,
       channelId: widget.channelName,
-      uid: 0,
+      uid: widget.uid,
       options: options,
     );
   } on PlatformException catch (e) {
@@ -99,6 +106,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   void _onToggleAudio() {
     setState(() {
       _isMicEnabled = !_isMicEnabled;
+      _currentUid = widget.uid;
       for (AgoraUser user in _users) {
         if (user.uid == _currentUid) {
           user.isAudioEnabled = _isMicEnabled;
@@ -111,6 +119,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   void _onToggleCamera() {
     setState(() {
       _isVideoEnabled = !_isVideoEnabled;
+            _currentUid = widget.uid;
       for (AgoraUser user in _users) {
         if (user.uid == _currentUid) {
           setState(() => user.isVideoEnabled = _isVideoEnabled);
@@ -330,11 +339,11 @@ class AgoraVideoView extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (_user.isVideoEnabled ?? false)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8 - 2),
-                    child: _user.view,
-                  ),
+                // if (_user.isVideoEnabled ?? false)
+                //   ClipRRect(
+                //     borderRadius: BorderRadius.circular(8 - 2),
+                //     child: _user.view,
+                //   ),
               ],
             ),
           ),

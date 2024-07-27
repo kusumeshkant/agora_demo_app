@@ -7,14 +7,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PreJoiningDialogs extends StatefulWidget {
-  const PreJoiningDialogs({
+   PreJoiningDialogs({
     super.key,
     required this.token,
     required this.channelName,
+    required this.uid,
   });
 
   final String token;
   final String channelName;
+   var uid;
 
   @override
   State<PreJoiningDialogs> createState() => _PreJoiningDialogsState();
@@ -54,10 +56,10 @@ class _PreJoiningDialogsState extends State<PreJoiningDialogs> {
 
   Future<void> _joinCall() async {
     setState(() => _isJoining = true);
-    await dotenv.load(fileName: "functions/.env");
-    final appId = dotenv.env['APP_ID'];
+    // await dotenv.load(fileName: "functions/.env");
+    final appId = '90c495efaac84b87840ad4d3b1a61d57';
     if (appId == null) {
-      throw Exception('Please add your APP_ID to .env file');
+      throw Exception('Please add your APP_ID');
     }
     setState(() => _isJoining = false);
     if (context.mounted) {
@@ -70,6 +72,7 @@ class _PreJoiningDialogsState extends State<PreJoiningDialogs> {
             channelName: widget.channelName,
             isMicEnabled: _isMicEnabled,
             isVideoEnabled: _isCameraEnabled,
+            uid: widget.uid,
           ),
         ),
       );

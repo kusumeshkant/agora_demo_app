@@ -1,10 +1,10 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:agora_viedio_app/widgets/pre_joining_dialog.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:uuid/uuid.dart';
 
 class CreateChannelPage extends StatefulWidget {
   const CreateChannelPage({super.key});
@@ -57,33 +57,47 @@ class _CreateChannelPageState extends State<CreateChannelPage> {
     }
     FocusScope.of(context).requestFocus(_unfocusNode);
     setState(() => _isCreatingChannel = true);
-    final input = <String, dynamic>{
-      'channelName': _channelNameController.text,
-      'expiryTime': 3600, // 1 hour
-    };
+    // final input = <String, dynamic>{
+    //   'channelName': _channelNameController.text,
+    //   'expiryTime': 3600, // 1 hour
+    // };
     try {
+      late final token;
+      final channelName = _channelNameController.text;
 
-      // final response = await FirebaseFunctions.instance
-      //     .httpsCallable('generateToken')
-      //     .call(input);
-          late final token ;
+      Random random = new Random();
+      int uid = random.nextInt(1000);
 
-          final channelName = _channelNameController.text;
-        //  var token;
-          final response = await http.get(Uri.parse('http://localhost:8080/access_token?channelName=$channelName&uid=0'));
-if (response.statusCode == 200) {
+      var body = {
+        "tokenType": "rtc",
+        "channel": channelName,
+        "role": "publisher", // "publisher" or "subscriber"
+        "uid": "$uid",
+        "expire": 3600 // optional: expiration time in seconds (default: 3600)
+      };
 
-      setState(() {
-      final  tk = json.decode(response.body)['token'];
-      token = tk;
-      print("token = $token");
-      
-        // client.agoraConnectionData.tempToken = token;
-      });
-      // await client.initialize();
-    } else {
-      throw Exception('Failed to load token');
-    }
+      final url = "https://agora-token-server-mz8p.onrender.com/getToken";
+      // final url = 'http://localhost:8080/access_token?channelName=$channelName&uid=0';
+      final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+      print("response:- ${response.body}");
+      if (response.statusCode == 200) {
+        setState(() {
+          final tk = json.decode(response.body)['token'];
+          token = tk;
+          print("token = $token");
+
+          // client.agoraConnectionData.tempToken = token;
+        });
+        // await client.initialize();
+      } else {
+        throw Exception('Failed to load token');
+      }
       if (token != null) {
         if (context.mounted) {
           _showSnackBar(
@@ -100,6 +114,7 @@ if (response.statusCode == 200) {
             builder: (context) => PreJoiningDialogs(
               channelName: _channelNameController.text,
               token: token,
+              uid: uid,
             ),
           );
         }
